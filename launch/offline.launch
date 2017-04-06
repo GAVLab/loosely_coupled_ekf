@@ -1,0 +1,50 @@
+<launch>
+  
+  <!-- Start ROSbag node -->
+<!--     <node pkg="rosbag" type="play" name="playback" args = "/home/geiger/bagfiles/2_23_17_bag_files/solar_field_run1_2017-02-23-11-53-22.bag" >
+    </node> -->
+<!--     <node pkg="rosbag" type="play" name="playback" args = "/home/stephen/bagfiles/Lowder_lot_bag_files/figure8_lowderLot.bag" >
+    </node> -->
+    <node pkg="rosbag" type="play" name="playback" args = "--clock /home/stephen/bagfiles/NCAT_Track_3-5-2017_bagfiles/track_60mph_run2.bag" >
+</node>
+
+  <!-- Start the Loosely Coupled EKF node -->
+    <node pkg="loosely_coupled_ekf" type="loosely_coupled_ekf_node" name="loosely_coupled_ekf" output="screen" required="true">
+      <param type="double" name="std_deviation_pos" value="0.003" />
+      <param type="double" name="std_deviation_vel" value="0.002" />
+      <param type="double" name="std_deviation_acc" value="2.000163151535074" />
+      <param type="double" name="std_deviation_acc_bias" value="0.00002000163151535074" />
+      <param type="double" name="std_deviation_gyr" value="0.040003263030701" />
+      <param type="double" name="std_deviation_gyr_bias" value="0.0000004000326303070147" />
+      <param type="double" name="std_deviation_pos_i" value="0.003" />
+      <param type="double" name="std_deviation_vel_i" value="0.002" />
+      <param type="double" name="std_deviation_att_i" value="0.01" />
+      <param type="double" name="std_deviation_acc_bias_i" value="2.000163151535074" />
+      <param type="double" name="std_deviation_gyr_bias_i" value="0.040003263030701" />
+      <rosparam param="initial_pos"> [-0.000000001523169015684675,0.0000000002931780744658038,-0.000000002382162270525819] </rosparam>
+      <rosparam param="initial_vel"> [0.025669347539440,0.533134100962458,0.003019103815826] </rosparam>
+      <rosparam param="initial_att"> [0.,0.,1.570796326794897] </rosparam>
+      <rosparam param="initial_bias"> [0.,0.,0.,0.,0.,0.] </rosparam>
+      <param name="dt_integration" value="0.009998368684266" />
+
+      <!-- IF GPS_SENSOR = 0, THEN NOVATEL -->
+      <!-- 				       = 1, THEN UBLOX -->
+      <param name="GPS_SENSOR" value="1" />
+      <!-- IF IMU_SENSOR = 0, THEN XBOW440 -->
+      <param name="IMU_SENSOR" value="0" />
+
+      <!-- IF NAV_FRAME = 0, THEN ENU -->
+      <!--              = 1, THEN NED -->
+      <param name="NAV_FRAME" value="1" />
+
+      <!-- IF POS_MEASURE = true, THEN receiving position measurements -->
+      <param name="POS_MEASURE" value="true" />
+
+      <!-- IF VEL_MEASURE = true, THEN receiving velocity measurements -->
+      <param name="VEL_MEASURE" value="true" />
+    </node>
+
+    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/stephen/bagfiles/ErrorStateEKFTest/EKFestimate60mph_run2 /EKF/estimate" >
+</node>
+
+</launch> 
