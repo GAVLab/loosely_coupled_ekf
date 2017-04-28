@@ -72,7 +72,11 @@ void LooselyCoupledEKF::time_update(Eigen::VectorXd &X, Eigen::MatrixXd &P, Eige
 	Cbn = Cbn*(2*eye3 + delOmega*dt)*(2*eye3 - delOmega*dt).inverse();
 
 	// Remove Gravity to get Linear Accel in the Nav Frame
-	accel_n = Cbn*accels + gravity;
+    if (estimate.header.frame_id == "NED") {
+	    accel_n = Cbn*accels + gravity;
+    } else if (estimate.header.frame_id == "ENU") {
+        accel_n = Cbn*accels - gravity;
+    }  
 
 	// Update Velocity
 	vel = vel + accel_n*dt;

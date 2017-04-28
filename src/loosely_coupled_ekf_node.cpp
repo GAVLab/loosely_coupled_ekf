@@ -79,7 +79,6 @@ LooselyCoupledNode::LooselyCoupledNode()
     } else if (GPS_SENSOR == 1) {
         // For ublox
         odomSub = nh.subscribe("gps/navsol", 10, &LooselyCoupledNode::ublox_odom_callback, this);
-        courseSub = nh.subscribe("gps/navvelned", 10, &LooselyCoupledNode::ublox_course_callback, this); // For ublox
     }
     if (IMU_SENSOR == 0) 
     {
@@ -133,304 +132,177 @@ LooselyCoupledNode::LooselyCoupledNode()
     MEAS_UPDATE_COND = false;            
 }
 
-void LooselyCoupledNode::ublox_course_callback(const ublox_msgs::NavVELNED& msg) 
-{
-    // For ublox Message
-    ublox_course = msg.heading;
-
-    if (initLLA) {
-
-        // Vehicle Course [rad]
-        course = (double)ublox_course * pow(10,-5) * PI / 180;
-        ned2enuCourse(course); // Convert from NED frame to ENU frame
-        wrapToPi(course); // Wrap course from -pi to +pi;
-
-        // MEAS_UPDATE_COND = true;
-        // if (MEAS_UPDATE_COND) {  
-        //     EKF.estimation(MEAS_UPDATE_COND);
-        //     MEAS_UPDATE_COND = false;
-        // }
-    }
-    
-}
-
 void LooselyCoupledNode::ublox_odom_callback(const ublox_msgs::NavSOL& msg) 
 {
-    // For ublox Message
-    if (initLLA) {
-        ecef_pos[0] = (double)msg.ecefX / 100;
-        ecef_pos[1] = (double)msg.ecefY / 100;
-        ecef_pos[2] = (double)msg.ecefZ / 100;
-        gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
-        gnssCommon::wgsxyz2lla(lla[0], lla[1], lla[2], ecef_pos);
-        ned_pos[0] = enu_pos[1];
-        ned_pos[1] = enu_pos[0];
-        ned_pos[2] = -enu_pos[2];
-
-        ecef_vel[0] = (double)msg.ecefVX / 100;
-        ecef_vel[1] = (double)msg.ecefVY / 100;
-        ecef_vel[2] = (double)msg.ecefVZ / 100;
-        ecef2enuVel(enu_vel, ecef_vel, lla[0], lla[1], lla[2]);
-        ned_vel[0] = enu_vel[1];
-        ned_vel[1] = enu_vel[0];
-        ned_vel[2] = -enu_vel[2];
-
-        if (NAV_FRAME == 0) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.Y[3] = enu_vel[0];
-                EKF.Y[4] = enu_vel[1];
-                EKF.Y[5] = enu_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_vel[0];
-                EKF.Y[1] = enu_vel[1];
-                EKF.Y[2] = enu_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        } else if (NAV_FRAME == 1) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.Y[3] = ned_vel[0];
-                EKF.Y[4] = ned_vel[1];
-                EKF.Y[5] = ned_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_vel[0];
-                EKF.Y[1] = ned_vel[1];
-                EKF.Y[2] = ned_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        }
-
-        MEAS_UPDATE_COND = true;
-        EKF.estimation(MEAS_UPDATE_COND);
-        MEAS_UPDATE_COND = false;
-    } else {
-        ecef_pos[0] = (double)msg.ecefX / 100;
-        ecef_pos[1] = (double)msg.ecefY / 100;
-        ecef_pos[2] = (double)msg.ecefZ / 100;
+// For ublox Message
+    // Assign ECEF Position
+    ecef_pos[0] = (double)msg.ecefX / 100;
+    ecef_pos[1] = (double)msg.ecefY / 100;
+    ecef_pos[2] = (double)msg.ecefZ / 100;
+    // Set Initial LLA
+    if (!initLLA) {
         gnssCommon::wgsxyz2lla(init_lla[0], init_lla[1], init_lla[2], ecef_pos);
-        gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
-        ned_pos[0] = enu_pos[1];
-        ned_pos[1] = enu_pos[0];
-        ned_pos[2] = -enu_pos[2];
-
-        ecef_vel[0] = (double)msg.ecefVX / 100;
-        ecef_vel[1] = (double)msg.ecefVY / 100;
-        ecef_vel[2] = (double)msg.ecefVZ / 100;
-        ecef2enuVel(enu_vel, ecef_vel, init_lla[0], init_lla[1], init_lla[2]);
-        ned_vel[0] = enu_vel[1];
-        ned_vel[1] = enu_vel[0];
-        ned_vel[2] = -enu_vel[2];
-
-        if (NAV_FRAME == 0) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.Y[3] = enu_vel[0];
-                EKF.Y[4] = enu_vel[1];
-                EKF.Y[5] = enu_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_vel[0];
-                EKF.Y[1] = enu_vel[1];
-                EKF.Y[2] = enu_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        } else if (NAV_FRAME == 1) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.Y[3] = ned_vel[0];
-                EKF.Y[4] = ned_vel[1];
-                EKF.Y[5] = ned_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_vel[0];
-                EKF.Y[1] = ned_vel[1];
-                EKF.Y[2] = ned_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        }
-        
-        MEAS_UPDATE_COND = true;
-        EKF.estimation(MEAS_UPDATE_COND);
-        MEAS_UPDATE_COND = false;
         initLLA = true;
     }
+    // Assign ENU Position
+    gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
+    // Assign LLA Position
+    gnssCommon::wgsxyz2lla(lla[0], lla[1], lla[2], ecef_pos);
+    // Assign NED Position
+    ned_pos[0] = enu_pos[1];
+    ned_pos[1] = enu_pos[0];
+    ned_pos[2] = -enu_pos[2];
+
+    // Assign ECEF Velocity
+    ecef_vel[0] = (double)msg.ecefVX / 100;
+    ecef_vel[1] = (double)msg.ecefVY / 100;
+    ecef_vel[2] = (double)msg.ecefVZ / 100;
+    // Assign ENU Velocity
+    ecef2enuVel(enu_vel, ecef_vel, lla[0], lla[1], lla[2]);
+    // Assign NED Velocity
+    ned_vel[0] = enu_vel[1];
+    ned_vel[1] = enu_vel[0];
+    ned_vel[2] = -enu_vel[2];
+
+    // If Using ENU Frame
+    if (NAV_FRAME == 0) {
+        if (POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = enu_pos[0];
+            EKF.Y[1] = enu_pos[1];
+            EKF.Y[2] = enu_pos[2];
+            EKF.Y[3] = enu_vel[0];
+            EKF.Y[4] = enu_vel[1];
+            EKF.Y[5] = enu_vel[2];
+            EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
+                     EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (POS_MEASURE && !VEL_MEASURE) {
+                EKF.Y[0] = enu_pos[0];
+            EKF.Y[1] = enu_pos[1];
+            EKF.Y[2] = enu_pos[2];
+            EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (!POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = enu_vel[0];
+            EKF.Y[1] = enu_vel[1];
+            EKF.Y[2] = enu_vel[2];
+            EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        }
+    // If Using NED Frame
+    } else if (NAV_FRAME == 1) {
+        if (POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = ned_pos[0];
+            EKF.Y[1] = ned_pos[1];
+            EKF.Y[2] = ned_pos[2];
+            EKF.Y[3] = ned_vel[0];
+            EKF.Y[4] = ned_vel[1];
+            EKF.Y[5] = ned_vel[2];
+            EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
+                     EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (POS_MEASURE && !VEL_MEASURE) {
+            EKF.Y[0] = ned_pos[0];
+            EKF.Y[1] = ned_pos[1];
+            EKF.Y[2] = ned_pos[2];
+            EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (!POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = ned_vel[0];
+            EKF.Y[1] = ned_vel[1];
+            EKF.Y[2] = ned_vel[2];
+            EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        }
+    }
+
+    // Perform Measurement Update
+    MEAS_UPDATE_COND = true;
+    EKF.estimation(MEAS_UPDATE_COND);
+    MEAS_UPDATE_COND = false;
 }   
 
 void LooselyCoupledNode::novatel_odom_callback(const nav_msgs::Odometry& msg) 
 {
-    // For Novatel Message
-    if (initLLA) {
-        ecef_pos[0] = (double)msg.pose.pose.position.x;
-        ecef_pos[1] = (double)msg.pose.pose.position.y;
-        ecef_pos[2] = (double)msg.pose.pose.position.z;
-        gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
-        gnssCommon::wgsxyz2lla(lla[0], lla[1], lla[2], ecef_pos);
-        ned_pos[0] = enu_pos[1];
-        ned_pos[1] = enu_pos[0];
-        ned_pos[2] = -enu_pos[2];
-
-        ecef_vel[0] = (double)msg.twist.twist.linear.x;
-        ecef_vel[1] = (double)msg.twist.twist.linear.y;
-        ecef_vel[2] = (double)msg.twist.twist.linear.z;
-        ecef2enuVel(enu_vel, ecef_vel, lla[0], lla[1], lla[2]);
-        ned_vel[0] = enu_vel[1];
-        ned_vel[1] = enu_vel[0];
-        ned_vel[2] = -enu_vel[2];
-
-        if (NAV_FRAME == 0) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.Y[3] = enu_vel[0];
-                EKF.Y[4] = enu_vel[1];
-                EKF.Y[5] = enu_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_vel[0];
-                EKF.Y[1] = enu_vel[1];
-                EKF.Y[2] = enu_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        } else if (NAV_FRAME == 1) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.Y[3] = ned_vel[0];
-                EKF.Y[4] = ned_vel[1];
-                EKF.Y[5] = ned_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_vel[0];
-                EKF.Y[1] = ned_vel[1];
-                EKF.Y[2] = ned_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        }
-        
-        MEAS_UPDATE_COND = true;
-        EKF.estimation(MEAS_UPDATE_COND);
-        MEAS_UPDATE_COND = false;
-
-    } else {
-        ecef_pos[0] = (double)msg.pose.pose.position.x;
-        ecef_pos[1] = (double)msg.pose.pose.position.y;
-        ecef_pos[2] = (double)msg.pose.pose.position.z;
+// For Novatel Message
+    // Assign ECEF Position
+    ecef_pos[0] = (double)msg.pose.pose.position.x;
+    ecef_pos[1] = (double)msg.pose.pose.position.y;
+    ecef_pos[2] = (double)msg.pose.pose.position.z;
+    // Set Initial LLA Position
+    if (!initLLA) {
         gnssCommon::wgsxyz2lla(init_lla[0], init_lla[1], init_lla[2], ecef_pos);
-        gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
-        ned_pos[0] = enu_pos[1];
-        ned_pos[1] = enu_pos[0];
-        ned_pos[2] = -enu_pos[2];
-
-        ecef_vel[0] = (double)msg.twist.twist.linear.x;
-        ecef_vel[1] = (double)msg.twist.twist.linear.y;
-        ecef_vel[2] = (double)msg.twist.twist.linear.z;
-        ecef2enuVel(enu_vel, ecef_vel, init_lla[0], init_lla[1], init_lla[2]);
-        ned_vel[0] = enu_vel[1];
-        ned_vel[1] = enu_vel[0];
-        ned_vel[2] = -enu_vel[2];
-
-        if (NAV_FRAME == 0) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.Y[3] = enu_vel[0];
-                EKF.Y[4] = enu_vel[1];
-                EKF.Y[5] = enu_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
-                EKF.Y[1] = enu_pos[1];
-                EKF.Y[2] = enu_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = enu_vel[0];
-                EKF.Y[1] = enu_vel[1];
-                EKF.Y[2] = enu_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        } else if (NAV_FRAME == 1) {
-            if (POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.Y[3] = ned_vel[0];
-                EKF.Y[4] = ned_vel[1];
-                EKF.Y[5] = ned_vel[2];
-                EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
-                         EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = ned_pos[0];
-                EKF.Y[1] = ned_pos[1];
-                EKF.Y[2] = ned_pos[2];
-                EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
-            } else if (!POS_MEASURE && VEL_MEASURE) {
-                EKF.Y[0] = ned_vel[0];
-                EKF.Y[1] = ned_vel[1];
-                EKF.Y[2] = ned_vel[2];
-                EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
-            }
-        }
-        
-        MEAS_UPDATE_COND = true;
-        EKF.estimation(MEAS_UPDATE_COND);
-        MEAS_UPDATE_COND = false;
         initLLA = true;
     }
+    // Assign ENU Position
+    gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
+    // Assign LLA Position
+    gnssCommon::wgsxyz2lla(lla[0], lla[1], lla[2], ecef_pos);
+    // Assign NED Position
+    ned_pos[0] = enu_pos[1];
+    ned_pos[1] = enu_pos[0];
+    ned_pos[2] = -enu_pos[2];
+
+    // Assign ECEF Velocity
+    ecef_vel[0] = (double)msg.twist.twist.linear.x;
+    ecef_vel[1] = (double)msg.twist.twist.linear.y;
+    ecef_vel[2] = (double)msg.twist.twist.linear.z;
+    // Assign ENU Velocity
+    ecef2enuVel(enu_vel, ecef_vel, lla[0], lla[1], lla[2]);
+    // Assign NED Velocity
+    ned_vel[0] = enu_vel[1];
+    ned_vel[1] = enu_vel[0];
+    ned_vel[2] = -enu_vel[2];
+
+    // If Using ENU Frame
+    if (NAV_FRAME == 0) {
+        if (POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = enu_pos[0];
+            EKF.Y[1] = enu_pos[1];
+            EKF.Y[2] = enu_pos[2];
+            EKF.Y[3] = enu_vel[0];
+            EKF.Y[4] = enu_vel[1];
+            EKF.Y[5] = enu_vel[2];
+            EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
+                     EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (POS_MEASURE && !VEL_MEASURE) {
+            EKF.Y[0] = enu_pos[0];
+            EKF.Y[1] = enu_pos[1];
+            EKF.Y[2] = enu_pos[2];
+            EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (!POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = enu_vel[0];
+            EKF.Y[1] = enu_vel[1];
+            EKF.Y[2] = enu_vel[2];
+            EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        }
+    // If Using NED Frame
+    } else if (NAV_FRAME == 1) {
+        if (POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = ned_pos[0];
+            EKF.Y[1] = ned_pos[1];
+            EKF.Y[2] = ned_pos[2];
+            EKF.Y[3] = ned_vel[0];
+            EKF.Y[4] = ned_vel[1];
+            EKF.Y[5] = ned_vel[2];
+            EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
+                     EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (POS_MEASURE && !VEL_MEASURE) {
+            EKF.Y[0] = ned_pos[0];
+            EKF.Y[1] = ned_pos[1];
+            EKF.Y[2] = ned_pos[2];
+            EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
+        } else if (!POS_MEASURE && VEL_MEASURE) {
+            EKF.Y[0] = ned_vel[0];
+            EKF.Y[1] = ned_vel[1];
+            EKF.Y[2] = ned_vel[2];
+            EKF.H << EKF.zero3, EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
+        }
+    }
+    
+    // Perform Measurement Update
+    MEAS_UPDATE_COND = true;
+    EKF.estimation(MEAS_UPDATE_COND);
+    MEAS_UPDATE_COND = false;
 }
 
 void LooselyCoupledNode::xbow_callback(const sensor_msgs::Imu& msg)
 {
+    // If Using ENU Frame
     if (NAV_FRAME == 0) {
         roll_rate_raw = (double)msg.angular_velocity.x; // Roll Rate [rad/sec]
         pitch_rate_raw = -(double)msg.angular_velocity.y; // Pitch Rate [rad/sec]
@@ -438,6 +310,7 @@ void LooselyCoupledNode::xbow_callback(const sensor_msgs::Imu& msg)
         accel_x_raw = (double)msg.linear_acceleration.x; // Longitudinal Acceleration [m/s^2]
         accel_y_raw = -(double)msg.linear_acceleration.y; // Lateral Acceleration [m/s^2]
         accel_z_raw = -(double)msg.linear_acceleration.z; // Vertical Acceleration [m/s^2]
+    // If Using NED Frame
     } else if (NAV_FRAME == 1) {
         roll_rate_raw = (double)msg.angular_velocity.x; // Roll Rate [rad/sec]
         pitch_rate_raw = (double)msg.angular_velocity.y; // Pitch Rate [rad/sec]
@@ -446,12 +319,16 @@ void LooselyCoupledNode::xbow_callback(const sensor_msgs::Imu& msg)
         accel_y_raw = (double)msg.linear_acceleration.y; // Lateral Acceleration [m/s^2]
         accel_z_raw = (double)msg.linear_acceleration.z; // Vertical Acceleration [m/s^2]  
     }
+
+    // Assign Input
     EKF.u << accel_x_raw, accel_y_raw, accel_z_raw, roll_rate_raw, pitch_rate_raw, yaw_rate_raw;
+    // Perform Time Update
     EKF.estimation(MEAS_UPDATE_COND);
 }
 
 int LooselyCoupledNode::ecef2enuVel(double enu_vel[], double ecef_vel[], double lat, double lon, double alt)
 {
+    // Converts ECEF velocity to ENU velocity
     // // Have to change the type of the ecef velocity for the matrix math
     Eigen::Vector3d ecefVel(ecef_vel[0], ecef_vel[1], ecef_vel[2]);
 
@@ -537,36 +414,6 @@ Eigen::Matrix3d LooselyCoupledNode::rotation_matrix(std::vector <double> euler)
     R = R_roll * R_pitch * R_yaw;
     // R = R.transposeInPlace();
     return R.transpose();
-}
-
-void LooselyCoupledNode::ned2enuCourse(double &course)
-{
-    if (course >= 0 && course < gpsPI/2)
-    {
-        course = gpsPI/2 - course;
-    } else {
-        course = 5*gpsPI/2 - course;
-    }
-}
-
-void LooselyCoupledNode::wrapToPi(double &angle) 
-{
-    while (angle > gpsPI) {
-        angle = angle - 2 * gpsPI;
-    }
-    while (angle < -gpsPI) {
-        angle = angle + 2 * gpsPI;
-    }
-}
-
-void LooselyCoupledNode::wrapTo2Pi(double &angle) 
-{
-    while (angle > 2 * gpsPI) {
-        angle = angle - 2 * gpsPI;
-    }
-    while (angle < 0) {
-        angle = angle + 2 * gpsPI;
-    }
 }
 
 int main(int argc, char **argv)

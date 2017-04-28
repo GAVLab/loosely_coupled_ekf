@@ -22,7 +22,6 @@
 // Message Includes
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
-#include <ublox_msgs/NavVELNED.h>
 #include <ublox_msgs/NavSOL.h>
 
 // Eigen Package include
@@ -60,7 +59,6 @@ public:
 	ros::Subscriber courseSub;
 	ros::Subscriber imuSub;
 	// ublox Callbacks
-	void ublox_course_callback(const ublox_msgs::NavVELNED& msg); // Course
 	void ublox_odom_callback(const ublox_msgs::NavSOL& msg); // Odometry
     // Novatel Callbacks
 	void novatel_odom_callback(const nav_msgs::Odometry& msg); // Odometry
@@ -76,9 +74,6 @@ private:
 	bool MEAS_UPDATE_COND;
 
     int ecef2enuVel(double enu_vel[], double ecef_vel[], double lat, double lon, double alt);
-    void ned2enuCourse(double &angle);
-    void wrapToPi(double &angle);
-    void wrapTo2Pi(double &angle);
     Eigen::Matrix3d rot(double angle, int axis);
 	Eigen::Matrix3d rotation_matrix(std::vector <double> euler);
 
