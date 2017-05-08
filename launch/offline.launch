@@ -3,10 +3,9 @@
   <!-- Start ROSbag node -->
 <!--     <node pkg="rosbag" type="play" name="playback" args = "/home/geiger/bagfiles/2_23_17_bag_files/solar_field_run1_2017-02-23-11-53-22.bag" >
     </node> -->
-<!--     <node pkg="rosbag" type="play" name="playback" args = "/home/stephen/bagfiles/Lowder_lot_bag_files/figure8_lowderLot.bag" >
-    </node> -->
     <node pkg="rosbag" type="play" name="playback" args = "--clock /home/geiger/bagfiles/NCAT_Track_3-5-2017_bagfiles/track_60mph_run2.bag" >
-</node>
+    </node>
+
 
   <!-- Start the Loosely Coupled EKF node -->
     <node pkg="loosely_coupled_ekf" type="loosely_coupled_ekf_node" name="loosely_coupled_ekf" output="screen" required="true">
@@ -26,11 +25,11 @@
       <rosparam param="initial_vel"> [0.025669347539440,0.533134100962458,0.003019103815826] </rosparam>
       <rosparam param="initial_att"> [0.,0.,1.570796326794897] </rosparam> -->
       <!-- For ENU Frame -->
-      <rosparam param="initial_pos"> [0.0000000002931780744658038,-0.000000001523169015684675,0.000000002382162270525819] </rosparam>
-      <rosparam param="initial_vel"> [0.533134100962458,0.025669347539440,-0.003019103815826] </rosparam>
+      <rosparam param="initial_pos"> [0.0,0.0,0.0] </rosparam>
+      <rosparam param="initial_vel"> [0.0,0.0,0.0] </rosparam>
       <rosparam param="initial_att"> [0.,0.,0] </rosparam>
       <rosparam param="initial_bias"> [0.,0.,0.,0.,0.,0.] </rosparam>
-      <param name="dt_integration" value="0.009998368684266" />
+      <param name="dt_integration" value="0.01" />
 
       <!-- IF GPS_SENSOR = 0, THEN NOVATEL -->
       <!-- 				       = 1, THEN UBLOX -->
@@ -49,7 +48,7 @@
       <param name="VEL_MEASURE" value="true" />
     </node>
 
-    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/geiger/Desktop/ErrorStateGPS/EKF_ROS_Test_files/EKFestimateENUTest /EKF/estimate" >
+    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/geiger/Desktop/ErrorStateGPS/EKF_ROS_Test_files/EKFestimateENUTest /EKF/estimate_test" >
 </node>
 
 </launch> 
