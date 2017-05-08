@@ -94,7 +94,7 @@ LooselyCoupledNode::LooselyCoupledNode()
     }
 
     // Publish Estimates to "EKF/estimates" topic
-    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimate",10);
+    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimate_test",10);
 
     // Initial State Estimate
     EKF.X << 0, 0, 0,
@@ -176,7 +176,7 @@ void LooselyCoupledNode::ublox_odom_callback(const ublox_msgs::NavSOL& msg)
             EKF.H <<  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3,
                      EKF.zero3,  EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3;
         } else if (POS_MEASURE && !VEL_MEASURE) {
-                EKF.Y[0] = enu_pos[0];
+            EKF.Y[0] = enu_pos[0];
             EKF.Y[1] = enu_pos[1];
             EKF.Y[2] = enu_pos[2];
             EKF.H << EKF.eye3, EKF.zero3, EKF.zero3, EKF.zero3, EKF.zero3;
@@ -351,8 +351,8 @@ Eigen::Matrix3d LooselyCoupledNode::rot(double angle, int axis)
 {
     Eigen::Matrix3d R;
 
-    double cang = cos(angle*gpsPI/180);
-    double sang = sin(angle*gpsPI/180);
+    double cang = cos(angle*PI/180);
+    double sang = sin(angle*PI/180);
 
     if (axis==1) {
         R(0,0)=1;

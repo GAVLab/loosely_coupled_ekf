@@ -210,21 +210,21 @@ void LooselyCoupledEKF::estimation(bool MEAS_UPDATE_COND) {
     estimate.state.bias_gy = bias(4);
     estimate.state.bias_gz = bias(5);
 
-    estimate.covariance.std_x = P(0,0);
-    estimate.covariance.std_y = P(1,1);
-    estimate.covariance.std_z = P(2,2);
-    estimate.covariance.std_vx = P(3,3);
-    estimate.covariance.std_vy = P(4,4);
-    estimate.covariance.std_vz = P(5,5);
-    estimate.covariance.std_roll = P(6,6);
-    estimate.covariance.std_pitch = P(7,7);
-    estimate.covariance.std_yaw = P(8,8);
-    estimate.covariance.std_bias_ax = P(9,9);
-    estimate.covariance.std_bias_ay = P(10,10);
-    estimate.covariance.std_bias_az = P(11,11);
-    estimate.covariance.std_bias_gx = P(12,12);
-    estimate.covariance.std_bias_gy = P(13,13);
-    estimate.covariance.std_bias_gz = P(14,14);
+    estimate.covariance.std_x = pow(P(0,0),0.5);
+    estimate.covariance.std_y = pow(P(1,1),0.5);
+    estimate.covariance.std_z = pow(P(2,2),0.5);
+    estimate.covariance.std_vx = pow(P(3,3),0.5);
+    estimate.covariance.std_vy = pow(P(4,4),0.5);
+    estimate.covariance.std_vz = pow(P(5,5),0.5);
+    estimate.covariance.std_roll = pow(P(6,6),0.5);
+    estimate.covariance.std_pitch = pow(P(7,7),0.5);
+    estimate.covariance.std_yaw = pow(P(8,8),0.5);
+    estimate.covariance.std_bias_ax = pow(P(9,9),0.5);
+    estimate.covariance.std_bias_ay = pow(P(10,10),0.5);
+    estimate.covariance.std_bias_az = pow(P(11,11),0.5);
+    estimate.covariance.std_bias_gx = pow(P(12,12),0.5);
+    estimate.covariance.std_bias_gy = pow(P(13,13),0.5);
+    estimate.covariance.std_bias_gz = pow(P(14,14),0.5);
 
     estimate.inputs.ax = u(0) - bias(0);
     estimate.inputs.ay = u(1) - bias(1);
