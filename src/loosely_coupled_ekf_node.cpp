@@ -31,10 +31,8 @@ void HandleDebugMessages(const std::string &msg)
 
 LooselyCoupledNode::LooselyCoupledNode()
 {
-
-  	// Create Node Handles
-  	ros::NodeHandle nh;
-  	ros::NodeHandle nhPvt("~");
+    // Create Private Node Handle
+    ros::NodeHandle nhPvt("~");
 
   	// Parameter Assignment from Launch file
     if( 
@@ -94,7 +92,7 @@ LooselyCoupledNode::LooselyCoupledNode()
     }
 
     // Publish Estimates to "EKF/estimates" topic
-    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimate_test",10);
+    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimate",10);
 
     // Initial State Estimate
     EKF.X << 0, 0, 0,
@@ -136,9 +134,9 @@ void LooselyCoupledNode::ublox_odom_callback(const ublox_msgs::NavSOL& msg)
 {
 // For ublox Message
     // Assign ECEF Position
-    ecef_pos[0] = (double)msg.ecefX / 100;
-    ecef_pos[1] = (double)msg.ecefY / 100;
-    ecef_pos[2] = (double)msg.ecefZ / 100;
+    ecef_pos[0] = ((double)msg.ecefX) / 100.0;
+    ecef_pos[1] = ((double)msg.ecefY) / 100.0;
+    ecef_pos[2] = ((double)msg.ecefZ) / 100.0;
     // Set Initial LLA
     if (!initLLA) {
         gnssCommon::wgsxyz2lla(init_lla[0], init_lla[1], init_lla[2], ecef_pos);
@@ -154,9 +152,9 @@ void LooselyCoupledNode::ublox_odom_callback(const ublox_msgs::NavSOL& msg)
     ned_pos[2] = -enu_pos[2];
 
     // Assign ECEF Velocity
-    ecef_vel[0] = (double)msg.ecefVX / 100;
-    ecef_vel[1] = (double)msg.ecefVY / 100;
-    ecef_vel[2] = (double)msg.ecefVZ / 100;
+    ecef_vel[0] = ((double)msg.ecefVX) / 100.0;
+    ecef_vel[1] = ((double)msg.ecefVY) / 100.0;
+    ecef_vel[2] = ((double)msg.ecefVZ) / 100.0;
     // Assign ENU Velocity
     ecef2enuVel(enu_vel, ecef_vel, lla[0], lla[1], lla[2]);
     // Assign NED Velocity
@@ -323,6 +321,7 @@ void LooselyCoupledNode::xbow_callback(const sensor_msgs::Imu& msg)
     // Assign Input
     EKF.u << accel_x_raw, accel_y_raw, accel_z_raw, roll_rate_raw, pitch_rate_raw, yaw_rate_raw;
     // Perform Time Update
+    MEAS_UPDATE_COND = false;
     EKF.estimation(MEAS_UPDATE_COND);
 }
 
@@ -423,6 +422,9 @@ int main(int argc, char **argv)
     
     // Create Instance of LooselyCoupledNode Class
     LooselyCoupledNode node;
+
+    // Set timer to reset the error states
+    ros::Timer timer = node.nh.createTimer(ros::Duration(1), &LooselyCoupledEKF::reset_error_state, &node.EKF);
 
     ros::spin();
 	return 0;

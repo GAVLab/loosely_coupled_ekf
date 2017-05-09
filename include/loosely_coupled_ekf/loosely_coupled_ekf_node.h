@@ -51,6 +51,9 @@ class LooselyCoupledNode
 {
 public:
 
+  	// Create Public Node Handle
+  	ros::NodeHandle nh;
+
 	LooselyCoupledNode();
 	~LooselyCoupledNode(){};
 
@@ -90,8 +93,6 @@ private:
 	double init_lla[3];
 
 	// Raw Measurement Variables
-	int ublox_course;
-	double course;
 	double roll_rate_raw;
 	double pitch_rate_raw;
 	double yaw_rate_raw;
