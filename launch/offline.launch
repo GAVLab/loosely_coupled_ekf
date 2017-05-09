@@ -3,8 +3,6 @@
   <!-- Start ROSbag node -->
 <!--     <node pkg="rosbag" type="play" name="playback" args = "/home/geiger/bagfiles/2_23_17_bag_files/solar_field_run1_2017-02-23-11-53-22.bag" >
     </node> -->
-    <node pkg="rosbag" type="play" name="playback" args = "--clock /home/geiger/bagfiles/NCAT_Track_3-5-2017_bagfiles/track_60mph_run2.bag" >
-    </node>
 
 
   <!-- Start the Loosely Coupled EKF node -->
@@ -27,7 +25,7 @@
       <!-- For ENU Frame -->
       <rosparam param="initial_pos"> [0.0,0.0,0.0] </rosparam>
       <rosparam param="initial_vel"> [0.0,0.0,0.0] </rosparam>
-      <rosparam param="initial_att"> [0.,0.,0] </rosparam>
+      <rosparam param="initial_att"> [0.,0.,-1.570796326794897] </rosparam>
       <rosparam param="initial_bias"> [0.,0.,0.,0.,0.,0.] </rosparam>
       <param name="dt_integration" value="0.01" />
 
@@ -39,7 +37,7 @@
 
       <!-- IF NAV_FRAME = 0, THEN ENU -->
       <!--              = 1, THEN NED -->
-      <param name="NAV_FRAME" value="0" />
+      <param name="NAV_FRAME" value="1" />
 
       <!-- IF POS_MEASURE = true, THEN receiving position measurements -->
       <param name="POS_MEASURE" value="true" />
@@ -48,7 +46,13 @@
       <param name="VEL_MEASURE" value="true" />
     </node>
 
-    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/geiger/Desktop/ErrorStateGPS/EKF_ROS_Test_files/EKFestimateENUTest /EKF/estimate_test" >
-</node>
+    <!-- Begin Recording Estimate -->
+    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/geiger/Desktop/ErrorStateGPS/EKF_ROS_Test_files/EKFestimateNEDTest /EKF/estimate_test" >
+    </node>
+
+    <!-- Begin Playing Rosbag -->
+    <node pkg="rosbag" type="play" name="playback" args = "--clock /home/geiger/bagfiles/NCAT_Geiger_Bagfiles/EKFestimateNEDTest_track_skid_park_2017-04-29-17-31-39.bag" >
+    </node>
+
 
 </launch> 

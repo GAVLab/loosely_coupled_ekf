@@ -28,7 +28,7 @@
 
 // Define PI and gpsPI
 #ifndef PI
-#define PI 3.14159265358979
+#define PI 3.141592653589793
 #endif
 #ifndef gpsPI
 #define gpsPI 3.1415926535898
@@ -47,6 +47,8 @@ public:
 	~LooselyCoupledEKF(){};
 
 	void estimation(bool MEAS_UPDATE_COND);
+    // Timer Callback
+    void reset_error_state(const ros::TimerEvent& event);
 
 	ros::Publisher estimatePub;
 

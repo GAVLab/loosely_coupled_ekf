@@ -70,6 +70,7 @@ void LooselyCoupledEKF::time_update(Eigen::VectorXd &X, Eigen::MatrixXd &P, Eige
 	// Gyro Transformation
 	delOmega = skew_symmetric(gyros);
 	Cbn = Cbn*(2*eye3 + delOmega*dt)*(2*eye3 - delOmega*dt).inverse();
+    // Cbn = Cbn*tmp1*tmp2;
 
 	// Remove Gravity to get Linear Accel in the Nav Frame
     if (estimate.header.frame_id == "NED") {
@@ -134,6 +135,18 @@ Eigen::Vector3d LooselyCoupledEKF::ctm_to_euler(Eigen::Matrix3d C) {
     eul(2) = atan2(C(0,1),C(0,0));
 
     return eul;
+}
+
+void LooselyCoupledEKF::reset_error_state(const ros::TimerEvent& event)
+{
+    pos = pos_ref;
+    vel = vel_ref;
+    Cbn = Cbn_ref;
+
+    for (int i = 0; i<9;i++)
+    {
+        X(i) = 0;
+    }
 }
 
 void LooselyCoupledEKF::estimation(bool MEAS_UPDATE_COND) {
