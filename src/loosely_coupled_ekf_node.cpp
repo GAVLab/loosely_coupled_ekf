@@ -94,7 +94,7 @@ LooselyCoupledNode::LooselyCoupledNode()
     }
 
     // Publish Estimates to "EKF/estimates" topic
-    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimateTest",10);
+    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimate",10);
 
     // Publish Reference LLA to "EKF/reflla" topic
     refllaPub = nh.advertise<geometry_msgs::Vector3Stamped>("EKF/reflla",10);
