@@ -48,7 +48,7 @@ public:
 
 	void estimation(bool MEAS_UPDATE_COND);
     // Timer Callback
-    void reset_error_state(const ros::TimerEvent& event);
+    void reset_error_state(const ros::TimerEvent&);
 
 	ros::Publisher estimatePub;
 

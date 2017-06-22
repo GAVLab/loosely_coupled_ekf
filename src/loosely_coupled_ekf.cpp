@@ -137,7 +137,7 @@ Eigen::Vector3d LooselyCoupledEKF::ctm_to_euler(Eigen::Matrix3d C) {
     return eul;
 }
 
-void LooselyCoupledEKF::reset_error_state(const ros::TimerEvent& event)
+void LooselyCoupledEKF::reset_error_state(const ros::TimerEvent&)
 {
     pos = pos_ref;
     vel = vel_ref;

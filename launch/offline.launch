@@ -9,6 +9,7 @@
     <node pkg="loosely_coupled_ekf" type="loosely_coupled_ekf_node" name="loosely_coupled_ekf" output="screen" required="true">
       <param type="double" name="std_deviation_pos" value="0.003" />
       <param type="double" name="std_deviation_vel" value="0.002" />
+      <!-- For xbow 440 -->
       <param type="double" name="std_deviation_acc" value="2.000163151535074" />
       <param type="double" name="std_deviation_acc_bias" value="0.00002000163151535074" />
       <param type="double" name="std_deviation_gyr" value="0.040003263030701" />
@@ -31,13 +32,13 @@
 
       <!-- IF GPS_SENSOR = 0, THEN NOVATEL -->
       <!-- 				       = 1, THEN UBLOX -->
-      <param name="GPS_SENSOR" value="1" />
+      <param name="GPS_SENSOR" value="0" />
       <!-- IF IMU_SENSOR = 0, THEN XBOW440 -->
       <param name="IMU_SENSOR" value="0" />
 
       <!-- IF NAV_FRAME = 0, THEN ENU -->
       <!--              = 1, THEN NED -->
-      <param name="NAV_FRAME" value="1" />
+      <param name="NAV_FRAME" value="0" />
 
       <!-- IF POS_MEASURE = true, THEN receiving position measurements -->
       <param name="POS_MEASURE" value="true" />
@@ -47,12 +48,11 @@
     </node>
 
     <!-- Begin Recording Estimate -->
-    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/geiger/Desktop/ErrorStateGPS/EKF_ROS_Test_files/EKFestimateNEDTest /EKF/estimate_test" >
+    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/stephen/bagfiles/ErrorStateEKFTest/Devel_test/EKFestimateNovatelTest /EKF/estimateTest" >
     </node>
 
     <!-- Begin Playing Rosbag -->
-    <node pkg="rosbag" type="play" name="playback" args = "--clock /home/geiger/bagfiles/NCAT_Geiger_Bagfiles/EKFestimateNEDTest_track_skid_park_2017-04-29-17-31-39.bag" >
+    <node pkg="rosbag" type="play" name="playback" args="--clock /home/stephen/bagfiles/Lowder_lot_bag_files/figure8_lowderLot.bag" >
     </node>
-
 
 </launch> 

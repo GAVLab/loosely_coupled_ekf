@@ -83,6 +83,8 @@ LooselyCoupledNode::LooselyCoupledNode()
         // For xbow 440
         imuSub = nh.subscribe("xbow440/imu/data", 10, &LooselyCoupledNode::xbow_callback, this); // For xbow 440
     }
+
+    // Assign Frame ID to header
     if (NAV_FRAME == 0)
     {
         EKF.estimate.header.frame_id = "ENU";
@@ -92,7 +94,10 @@ LooselyCoupledNode::LooselyCoupledNode()
     }
 
     // Publish Estimates to "EKF/estimates" topic
-    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimate",10);
+    EKF.estimatePub = nh.advertise<loosely_coupled_ekf::LooselyCoupledEstimate>("EKF/estimateTest",10);
+
+    // Publish Reference LLA to "EKF/reflla" topic
+    refllaPub = nh.advertise<geometry_msgs::Vector3Stamped>("EKF/reflla",10);
 
     // Initial State Estimate
     EKF.X << 0, 0, 0,
@@ -142,6 +147,12 @@ void LooselyCoupledNode::ublox_odom_callback(const ublox_msgs::NavSOL& msg)
         gnssCommon::wgsxyz2lla(init_lla[0], init_lla[1], init_lla[2], ecef_pos);
         initLLA = true;
     }
+    // Publish Initial LLA
+    reference_LLA.header.stamp = ros::Time::now();
+    reference_LLA.vector.x = init_lla[0];
+    reference_LLA.vector.y = init_lla[1];
+    reference_LLA.vector.z = init_lla[2];
+    refllaPub.publish(reference_LLA);
     // Assign ENU Position
     gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
     // Assign LLA Position
@@ -226,6 +237,12 @@ void LooselyCoupledNode::novatel_odom_callback(const nav_msgs::Odometry& msg)
         gnssCommon::wgsxyz2lla(init_lla[0], init_lla[1], init_lla[2], ecef_pos);
         initLLA = true;
     }
+    // Publish Initial LLA
+    reference_LLA.header.stamp = ros::Time::now();
+    reference_LLA.vector.x = init_lla[0];
+    reference_LLA.vector.y = init_lla[1];
+    reference_LLA.vector.z = init_lla[2];
+    refllaPub.publish(reference_LLA);
     // Assign ENU Position
     gnssCommon::wgsxyz2enu(enu_pos, ecef_pos, init_lla[0], init_lla[1], init_lla[2]);
     // Assign LLA Position
@@ -236,11 +253,9 @@ void LooselyCoupledNode::novatel_odom_callback(const nav_msgs::Odometry& msg)
     ned_pos[2] = -enu_pos[2];
 
     // Assign ECEF Velocity
-    ecef_vel[0] = (double)msg.twist.twist.linear.x;
-    ecef_vel[1] = (double)msg.twist.twist.linear.y;
-    ecef_vel[2] = (double)msg.twist.twist.linear.z;
-    // Assign ENU Velocity
-    ecef2enuVel(enu_vel, ecef_vel, lla[0], lla[1], lla[2]);
+    enu_vel[0] = (double)msg.twist.twist.linear.x;
+    enu_vel[1] = (double)msg.twist.twist.linear.y;
+    enu_vel[2] = (double)msg.twist.twist.linear.z;
     // Assign NED Velocity
     ned_vel[0] = enu_vel[1];
     ned_vel[1] = enu_vel[0];

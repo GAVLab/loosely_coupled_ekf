@@ -23,6 +23,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <ublox_msgs/NavSOL.h>
+#include <geometry_msgs/Vector3Stamped.h>
 
 // Eigen Package include
 #include <eigen3/Eigen/Dense>
@@ -61,11 +62,14 @@ public:
 	ros::Subscriber odomSub;
 	ros::Subscriber courseSub;
 	ros::Subscriber imuSub;
+	// Reference LLA Publisher
+	ros::Publisher refllaPub;
+	geometry_msgs::Vector3Stamped reference_LLA;
 	// ublox Callbacks
 	void ublox_odom_callback(const ublox_msgs::NavSOL& msg); // Odometry
     // Novatel Callbacks
 	void novatel_odom_callback(const nav_msgs::Odometry& msg); // Odometry
-    // Xbow Callback
+    // Xbow Callback 
     void xbow_callback(const sensor_msgs::Imu& msg); // Gyros and Accels
 
 	LooselyCoupledEKF EKF;
