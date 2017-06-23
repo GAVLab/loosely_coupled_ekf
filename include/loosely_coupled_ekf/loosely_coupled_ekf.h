@@ -46,7 +46,7 @@ public:
 	LooselyCoupledEKF();
 	~LooselyCoupledEKF(){};
 
-	void estimation(bool MEAS_UPDATE_COND);
+	void estimation(bool MEAS_UPDATE_COND, bool POS_MEASURE, bool VEL_MEASURE);
     // Timer Callback
     void reset_error_state(const ros::TimerEvent&);
 
@@ -87,10 +87,6 @@ public:
 	Eigen::VectorXd Y;
 	// Input
 	Eigen::VectorXd u;
-	// Measurement Model
-	Eigen::MatrixXd H;
-	// Weight Matrix
-	Eigen::MatrixXd R;
 	// Transformation Matrix
 	Eigen::Matrix3d Cbn;
 	// Identity Matrices
@@ -123,8 +119,6 @@ private:
 	Eigen::Vector3d att;
 	Eigen::Vector3d b_a;
 	Eigen::Vector3d b_g;
-	// Measurement Vector
-	Eigen::VectorXd m;
 	// Inputs
 	Eigen::Vector3d accels;
 	Eigen::Vector3d gyros;

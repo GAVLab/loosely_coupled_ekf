@@ -20,7 +20,8 @@
       <param name="dt_integration" value="0.01" />
 
       <!-- IF GPS_SENSOR = 0, THEN NOVATEL -->
-      <!-- 				       = 1, THEN UBLOX -->
+      <!-- 		       = 1, THEN UBLOX -->
+      <!--               = 2, THEN GAZEBO -->
       <param name="GPS_SENSOR" value="1" />
       <!-- IF IMU_SENSOR = 0, THEN XBOW440 -->
       <param name="IMU_SENSOR" value="0" />

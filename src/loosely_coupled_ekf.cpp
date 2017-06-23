@@ -10,7 +10,7 @@
 
 #include "loosely_coupled_ekf.h"
 
-LooselyCoupledEKF::LooselyCoupledEKF(): PHI(15,15), Bw(15,12), Qd(15,15), Q(12,12), R(6,6), H(6,15), P(15,15), X(15), eye15(15,15), Y(6), m(6), u(6), bias(6)
+LooselyCoupledEKF::LooselyCoupledEKF(): PHI(15,15), Bw(15,12), Qd(15,15), Q(12,12), P(15,15), X(15), eye15(15,15), Y(6), u(6), bias(6)
 {
 	// Identity Matrix
 	eye3.setIdentity();
@@ -149,7 +149,7 @@ void LooselyCoupledEKF::reset_error_state(const ros::TimerEvent&)
     }
 }
 
-void LooselyCoupledEKF::estimation(bool MEAS_UPDATE_COND) {
+void LooselyCoupledEKF::estimation(bool MEAS_UPDATE_COND, bool POS_MEASURE, bool VEL_MEASURE) {
     //------------Noise Properties------------
     // Process Noise Covariance Matrix
     Q << pow(prms.std_acc,2), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -165,12 +165,13 @@ void LooselyCoupledEKF::estimation(bool MEAS_UPDATE_COND) {
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pow(prms.std_gyr_bias,2), 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pow(prms.std_gyr_bias,2);
     // Measurement Noise Covariance Matrix
-    R << pow(prms.std_pos,2), 0, 0, 0, 0, 0,
-         0, pow(prms.std_pos,2), 0, 0, 0, 0,
-         0, 0, pow(prms.std_pos,2), 0, 0, 0,
-         0, 0, 0, pow(prms.std_vel,2), 0, 0,
-         0, 0, 0, 0, pow(prms.std_vel,2), 0,
-         0, 0, 0, 0, 0, pow(prms.std_vel,2);
+    // R << pow(prms.std_pos,2), 0, 0, 0, 0, 0,
+    //      0, pow(prms.std_pos,2), 0, 0, 0, 0,
+    //      0, 0, pow(prms.std_pos,2), 0, 0, 0,
+    //      0, 0, 0, pow(prms.std_vel,2), 0, 0,
+    //      0, 0, 0, 0, pow(prms.std_vel,2), 0,
+    //      0, 0, 0, 0, 0, pow(prms.std_vel,2);
+
 
     // Perform Time Update if condition is false
     if (!MEAS_UPDATE_COND)
@@ -180,14 +181,62 @@ void LooselyCoupledEKF::estimation(bool MEAS_UPDATE_COND) {
 
     // Perform Measurement Update if condition is true
     if (MEAS_UPDATE_COND)
-    {
-        m(0) = pos(0) - Y(0);
-        m(1) = pos(1) - Y(1);
-        m(2) = pos(2) - Y(2);
-        m(3) = vel(0) - Y(3);
-        m(4) = vel(1) - Y(4);
-        m(5) = vel(2) - Y(5);
-        measurement_update(X,P,m,R,H);
+    {    
+        if (POS_MEASURE && VEL_MEASURE) {
+            // Measurement Model
+            Eigen::MatrixXd H(6,15);
+            H <<  eye3,  zero3, zero3, zero3, zero3,
+                  zero3, eye3,  zero3, zero3, zero3;
+            // Measurement Noise Covariance Matrix
+            Eigen::MatrixXd R(6,6);
+            R << pow(prms.std_pos,2), 0, 0, 0, 0, 0,
+                 0, pow(prms.std_pos,2), 0, 0, 0, 0,
+                 0, 0, pow(prms.std_pos,2), 0, 0, 0,
+                 0, 0, 0, pow(prms.std_vel,2), 0, 0,
+                 0, 0, 0, 0, pow(prms.std_vel,2), 0,
+                 0, 0, 0, 0, 0, pow(prms.std_vel,2);
+            // Measurements
+            Eigen::VectorXd m(6);
+            m(0) = pos(0) - Y(0);
+            m(1) = pos(1) - Y(1);
+            m(2) = pos(2) - Y(2);
+            m(3) = vel(0) - Y(3);
+            m(4) = vel(1) - Y(4);
+            m(5) = vel(2) - Y(5);
+            // Measurement Update
+            measurement_update(X,P,m,R,H);
+        } else if (POS_MEASURE && !VEL_MEASURE) {
+            // Measurement Model
+            Eigen::MatrixXd H(3,15);
+            H << eye3, zero3, zero3, zero3, zero3;
+            // Measurement Noise Covariance Matrix
+            Eigen::MatrixXd R(3,3);
+            R << pow(prms.std_pos,2), 0, 0,
+                 0, pow(prms.std_pos,2), 0,
+                 0, 0, pow(prms.std_pos,2);
+            // Measurements
+            Eigen::VectorXd m(3);
+            m(0) = pos(0) - Y(0);
+            m(1) = pos(1) - Y(1);
+            m(2) = pos(2) - Y(2);
+            // Measurement Update
+            measurement_update(X,P,m,R,H);
+        } else if (!POS_MEASURE && VEL_MEASURE) {
+            Eigen::MatrixXd H(3,15);
+            H << zero3, eye3, zero3, zero3, zero3;
+            // Measurement Noise Covariance Matrix
+            Eigen::MatrixXd R(3,3);
+            R << pow(prms.std_vel,2), 0, 0,
+                 0, pow(prms.std_vel,2), 0,
+                 0, 0, pow(prms.std_vel,2);
+            // Measurements
+            Eigen::VectorXd m(3);
+            m(0) = vel(0) - Y(3);
+            m(1) = vel(1) - Y(4);
+            m(2) = vel(2) - Y(5);
+            // Measurement Update
+            measurement_update(X,P,m,R,H);
+        }
     }
 
     // Update Navigation Frame States

@@ -32,9 +32,12 @@
 
       <!-- IF GPS_SENSOR = 0, THEN NOVATEL -->
       <!-- 				       = 1, THEN UBLOX -->
-      <param name="GPS_SENSOR" value="0" />
+      <!--               = 2, THEN UBLOX -->
+      <param name="GPS_SENSOR" value="1" />
       <!-- IF IMU_SENSOR = 0, THEN XBOW440 -->
+      <!--               = 1, THEN GAZEBO -->
       <param name="IMU_SENSOR" value="0" />
+      <param name="IMU_SENSOR" value="1" />
 
       <!-- IF NAV_FRAME = 0, THEN ENU -->
       <!--              = 1, THEN NED -->
@@ -48,8 +51,8 @@
     </node>
 
     <!-- Begin Recording Estimate -->
-    <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/stephen/bagfiles/ErrorStateEKFTest/Devel_test/EKFestimateNovatelTest /EKF/estimateTest" >
-    </node>
+   <!--  <node pkg="rosbag" type="record" name="rosbag_record_estimate" args="-o /home/stephen/bagfiles/ErrorStateEKFTest/Devel_test/EKFestimateNovatelTest /EKF/estimateTest" >
+    </node> -->
 
     <!-- Begin Playing Rosbag -->
     <node pkg="rosbag" type="play" name="playback" args="--clock /home/stephen/bagfiles/Lowder_lot_bag_files/figure8_lowderLot.bag" >

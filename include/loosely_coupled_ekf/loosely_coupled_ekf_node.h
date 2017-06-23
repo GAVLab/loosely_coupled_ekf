@@ -24,6 +24,7 @@
 #include <sensor_msgs/Imu.h>
 #include <ublox_msgs/NavSOL.h>
 #include <geometry_msgs/Vector3Stamped.h>
+#include <sensor_msgs/NavSatFix.h>
 
 // Eigen Package include
 #include <eigen3/Eigen/Dense>
@@ -60,7 +61,8 @@ public:
 
 	// Subscribers
 	ros::Subscriber odomSub;
-	ros::Subscriber courseSub;
+	ros::Subscriber llaSub;
+	ros::Subscriber velSub;
 	ros::Subscriber imuSub;
 	// Reference LLA Publisher
 	ros::Publisher refllaPub;
@@ -69,6 +71,9 @@ public:
 	void ublox_odom_callback(const ublox_msgs::NavSOL& msg); // Odometry
     // Novatel Callbacks
 	void novatel_odom_callback(const nav_msgs::Odometry& msg); // Odometry
+	// Gazebo Callbacks
+	void gazebo_lla_callback(const sensor_msgs::NavSatFix& msg); // Latitude, Longitude, Altitude
+	void gazebo_vel_callback(const geometry_msgs::Vector3Stamped& msg); // NWU velocity
     // Xbow Callback 
     void xbow_callback(const sensor_msgs::Imu& msg); // Gyros and Accels
 
