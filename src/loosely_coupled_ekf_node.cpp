@@ -1,9 +1,10 @@
 /*
-  \file     loosely_coupled_ekf_node.cpp
-  \brief    C++ file for Loosely Coupled EKF ROS wrapper.
+  \file         loosely_coupled_ekf_node.cpp
+  \brief        C++ file for Loosely Coupled EKF ROS wrapper.
   
-  \author   Stephen Geiger <sag0020@tigermail.auburn.edu>
-  \date     April 4, 2017
+  \author       Stephen Geiger <sag0020@tigermail.auburn.edu>
+  \maintainer   Dan Pierce <jdp0009@tigermail.auburn.edu>
+  \date         April 4, 2017
 */
 
 
@@ -32,42 +33,39 @@ void HandleDebugMessages(const std::string &msg)
 LooselyCoupledNode::LooselyCoupledNode()
 {
     // Create Private Node Handle
-    ros::NodeHandle nhPvt("~");
+    ros::NodeHandle nh("~");
 
-  	// Parameter Assignment from Launch file
-    if( 
-        // Measurement Noise Covariance Matrix (Q)
-        !nhPvt.getParam("std_deviation_pos", EKF.prms.std_pos) || // Position Std Dev
-        !nhPvt.getParam("std_deviation_vel", EKF.prms.std_vel) || // Velocity Std Dev
-        // Process Noise Covariance Matrix (R)
-        !nhPvt.getParam("std_deviation_acc", EKF.prms.std_acc) || // Accel Std Dev
-        !nhPvt.getParam("std_deviation_acc_bias", EKF.prms.std_acc_bias) || // Accel Bias Std Dev
-        !nhPvt.getParam("std_deviation_gyr", EKF.prms.std_gyr) || // Gyro Std Dev
-        !nhPvt.getParam("std_deviation_gyr_bias", EKF.prms.std_gyr_bias) || // Gyro Bias Std Dev
-        // Initial State Estimate Covariance Matrix (P)
-        !nhPvt.getParam("std_deviation_pos_i", EKF.prms.std_pos_i) || // Pos Std Dev
-        !nhPvt.getParam("std_deviation_vel_i", EKF.prms.std_vel_i) || // Vel Std Dev
-        !nhPvt.getParam("std_deviation_att_i", EKF.prms.std_att_i) || // Attitude Std Dev
-        !nhPvt.getParam("std_deviation_acc_bias_i", EKF.prms.std_acc_bias_i) || // Accel Bias Std Dev
-        !nhPvt.getParam("std_deviation_gyr_bias_i", EKF.prms.std_gyr_bias_i) || // Gyro Bias Std Dev
-        // Initial State Estimates (X)
-        !nhPvt.getParam("initial_pos", EKF.prms.pos_i) || // Position
-        !nhPvt.getParam("initial_vel", EKF.prms.vel_i) || // Velocity
-        !nhPvt.getParam("initial_att", EKF.prms.att_i) || // Attitude
-        !nhPvt.getParam("initial_bias", EKF.prms.bias_i) || // Bias
-        // Integration Time step
-        !nhPvt.getParam("dt_integration", EKF.dt_integration) ||
-        // Sensors being used
-        !nhPvt.getParam("GPS_SENSOR", GPS_SENSOR) ||
-        !nhPvt.getParam("IMU_SENSOR", IMU_SENSOR) ||
-        // Navigation Frame being used
-        !nhPvt.getParam("NAV_FRAME", NAV_FRAME) ||
-        // Receiving Position/Velocity Measurements
-        !nhPvt.getParam("POS_MEASURE", POS_MEASURE) ||
-        !nhPvt.getParam("VEL_MEASURE", VEL_MEASURE))
-    {
-        ROS_ERROR("Could not get all Error State EKF parameters");
-    } 
+    	
+    ////////////////////
+    /* ROS Parameters */
+    ////////////////////
+    // Measurement Noise Covariance Matrix (Q)
+    nh.param("std_deviation_pos", EKF.prms.std_pos, 1.0); // Position Std Dev
+    nh.param("std_deviation_vel", EKF.prms.std_vel, 0.3); // Velocity Std Dev
+    // Process Noise Covariance Matrix (R)
+    nh.param("std_deviation_acc", EKF.prms.std_acc, 2.0e-3); // Accel Std Dev
+    nh.param("std_deviation_acc_bias", EKF.prms.std_acc_bias, 2.0e-4); // Accel Bias Std Dev
+    nh.param("std_deviation_gyr", EKF.prms.std_gyr, 2.0e-4); // Gyro Std Dev
+    nh.param("std_deviation_gyr_bias", EKF.prms.std_gyr_bias, 2.0e-5); // Gyro Bias Std Dev
+    // Initial State Estimate Covariance Matrix (P)
+    nh.param("std_deviation_pos_i", EKF.prms.std_pos_i, 1.0); // Pos Std Dev
+    nh.param("std_deviation_vel_i", EKF.prms.std_vel_i, 0.3); // Vel Std Dev
+    nh.param("std_deviation_att_i", EKF.prms.std_att_i, 0.1); // Attitude Std Dev
+    nh.param("std_deviation_acc_bias_i", EKF.prms.std_acc_bias_i, 1.0e-3); // Accel Bias Std Dev
+    nh.param("std_deviation_gyr_bias_i", EKF.prms.std_gyr_bias_i, 1.0e-4); // Gyro Bias Std Dev
+    // Initial State Estimates (X)
+    // nh.param("initial_heading", EKF.prms.att_i); // Attitude
+    // Integration Time step
+    nh.param("dt_integration", EKF.dt_integration, 1.0e-2);
+    // Sensors being used
+    nh.param("GPS_SENSOR", GPS_SENSOR, 1);
+    nh.param("IMU_SENSOR", IMU_SENSOR, 1);
+    // Navigation Frame being used
+    nh.param("NAV_FRAME", NAV_FRAME, 0);
+    // Receiving Position/Velocity Measurements
+    nh.param("POS_MEASURE", POS_MEASURE, true);
+    nh.param("VEL_MEASURE", VEL_MEASURE, true);
+
 
     // Select Callback based on which sensors are being used
     if (GPS_SENSOR == 0)
